@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+#include <vector>
 using namespace std;
 
 //declare structures
@@ -22,16 +23,26 @@ struct Machine
   double currentPeriod;                          // starts from 1
   int calcTime(Task testTask, bool repairOrNot); // if no repair: repairOrNot = 0
 };
-
-double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, int repairPeriods, double initYield, int currentPeriod, double lowestYieldConstraint);
+struct Assignment
+{
+  int time;
+  bool repair;
+  int assignTo;
+  int score = 0;
+};
 
 //declare global variables
 int machineNum = -1, taskNum = -1, maxRepairNum = -1;
-Machine *machine;
-Task *task;
+Machine *machine=nullptr;
+Task *task=nullptr;
+Assignment *assignments=nullptr;
 
 //declare functions
 void sortTasks();
+double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, int repairPeriods, double initYield, int currentPeriod, double lowestYieldConstraint);
+Assignment optimalAssignment(Task);
+int calculateScore(int, int);
+void sortAssignment();
 
 //algorithm
 int main()
@@ -56,6 +67,55 @@ int main()
   }
   //end of input
 
+  sortTasks();
+
+  vector<int> schedule[machineNum];
+  
+  //bug start
+  for (int i = 0; i < taskNum; i++)
+  {
+    Assignment optimal = optimalAssignment(task[i]);
+    if (optimal.repair)
+    {
+      schedule[optimal.assignTo].push_back(-1);
+    }
+    schedule[optimal.assignTo].push_back(i);
+    machine[optimal.assignTo].currentPeriod += optimal.time;
+  }
+  //bug end
+
+  for (int i = 0; i < machineNum; i++)
+  {
+    if (schedule[i].size() == 0)
+    {
+      cout << "0\n";
+    }
+    else
+    {
+      for (int j = 0; j < schedule[i].size(); j++)
+      {
+        if (j != 0)
+        {
+          cout << ",";
+        }
+        if (schedule[i][j] == -1)
+        {
+          cout << "M";
+        }
+        else
+        {
+          cout << schedule[i][j];
+        }
+      }
+      if (i != machineNum - 1)
+      {
+        cout << "\n";
+      }
+    }
+  }
+
+  delete machine;
+  delete task;
   return 0;
 }
 
@@ -85,7 +145,7 @@ void sortTasks()
   }
 
   sort(task, task + taskNum, [](const Task &lhs, const Task &rhs) {
-    return lhs.score > rhs.score;
+    return lhs.score < rhs.score;
   });
 }
 
@@ -109,8 +169,7 @@ double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, i
 {
   if (whichPeriodToRepair == 0)
   { // do not repair
-    return max(stdOutput * round(initYield - yieldDec * (currentPeriod)) / static_cast<double>(100),
-               lowestYieldConstraint);
+    return max(stdOutput * round(initYield - yieldDec * (currentPeriod)) / static_cast<double>(100), lowestYieldConstraint);
   }
   else if (whichPeriodToRepair == 1)
   {
@@ -120,13 +179,65 @@ double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, i
     }
     else
     {
-      return max(stdOutput * round(100.0 - yieldDec * (currentPeriod - whichPeriodToRepair - repairPeriods)) / static_cast<double>(100),
-                 lowestYieldConstraint);
+      return max(stdOutput * round(100.0 - yieldDec * (currentPeriod - whichPeriodToRepair - repairPeriods)) / static_cast<double>(100), lowestYieldConstraint);
     }
   }
   else
   {
     cout << "You can only repair at the first period or do not repair at all. Input 1 or 0 instead." << endl;
     return 0;
+  }
+}
+
+Assignment optimalAssignment(Task task)
+{
+  assignments = new Assignment[taskNum * 2];
+  for (int i = 0; i < machineNum; i++)
+  {
+    assignments[i * 2].time = machine[i].calcTime(task, 0);
+    assignments[i * 2].assignTo = i;
+    assignments[i * 2].repair = 0;
+    assignments[i * 2 + 1].time = machine[i].calcTime(task, 1);
+    assignments[i * 2 + 1].assignTo = i;
+    assignments[i * 2 + 1].repair = 1;
+  }
+  sortAssignment();
+  Assignment optimal;
+  optimal.time = assignments[0].time;
+  optimal.assignTo = assignments[0].assignTo;
+  optimal.repair = assignments[0].repair;
+  delete assignments;
+  return optimal;
+}
+
+void sortAssignment()
+{
+  {
+    //multipliers
+    const int durationMultiplier = 1;
+    const int endTimeMultiplier = 1;
+
+    //sort
+    sort(assignments, assignments + taskNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
+      return lhs.time < rhs.time;
+    });
+
+    for (int i = taskNum * 2; i > 0; i--)
+    {
+      assignments[i].score += i * durationMultiplier;
+    }
+
+    sort(assignments, assignments + taskNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
+      return lhs.time + machine[lhs.assignTo].currentPeriod < rhs.time + machine[rhs.assignTo].currentPeriod;
+    });
+
+    for (int i = taskNum * 2; i > 0; i--)
+    {
+      assignments[i].score += i * endTimeMultiplier;
+    }
+
+    sort(assignments, assignments + taskNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
+      return lhs.score < rhs.score;
+    });
   }
 }
