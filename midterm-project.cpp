@@ -5,10 +5,10 @@
 using namespace std;
 
 //multipliers
-const int durationMultiplier = 1;
-const int endTimeMultiplier = 1;
-const int deadlineMultiplier = 1;
-const int quantityMultiplier = 1;
+const int durationMultiplier = 2;
+const int endTimeMultiplier = 3;
+const int deadlineMultiplier = 2;
+const int quantityMultiplier = 3;
 
 //declare structures
 struct Task
@@ -269,7 +269,7 @@ void writeRepair(int start, int duration)
 bool checkRepair(int start, int duration)
 {
   bool repairable = 1;
-  for (int i = start; i < start + duration; i++)
+  for (int i = start; i < start + duration - 1; i++)
   {
     int repairCnt = 0;
     for (int j = 0; j < repairLog.size(); j++)
