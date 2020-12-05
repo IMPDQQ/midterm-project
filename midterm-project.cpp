@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 using namespace std;
 
 //declare structures
@@ -16,7 +17,12 @@ struct Machine
   double decreasingRate;
   double minimumProduction;
   int maintenanceTime;
+  double curPeriod; // starts from 1
+  int calcTime(Task aTask, int repairOrNot); // if no repair: repairOrNot = 0
 };
+
+double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, int repairPeriods, double initYield, int curPeriod,
+                   double lowestYieldConstraint);
 
 //declare global variables
 int machineNum = -1, taskNum = -1, maxRepairNum = -1;
@@ -47,4 +53,38 @@ int main()
   //end of input
 
   return 0;
+}
+
+int Machine::calcTime(Task aTask, int repairOrNot) {
+    int quantity = aTask.quantity, currentPeriod = curPeriod, consumedPeriod = 0;
+    double lowestYieldConstraint = idealProduction * minimumProduction / static_cast<float>(100);
+    while (true) {
+        if (quantity <= 0) {
+            return consumedPeriod;
+        }
+        quantity -= createYield(repairOrNot, idealProduction, decreasingRate, maintenanceTime, initialProduction, currentPeriod, lowestYieldConstraint);
+        consumedPeriod++;
+        currentPeriod++;
+    }
+}
+
+double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, int repairPeriods, double initYield, int curPeriod,
+                   double lowestYieldConstraint) {
+    if (whichPeriodToRepair == 0) { // do not repair
+        return max(stdOutput * round(initYield - yieldDec * (curPeriod)) / static_cast<float>(100),
+                   lowestYieldConstraint);
+    }
+    else if (whichPeriodToRepair == 1) {
+        if (whichPeriodToRepair <= curPeriod && curPeriod <= whichPeriodToRepair + repairPeriods - 1) {
+            return 0;
+        }
+        else {
+            return max(stdOutput * round(100.0 - yieldDec * (curPeriod - whichPeriodToRepair - repairPeriods)) / static_cast<float>(100),
+                       lowestYieldConstraint);
+        }
+    }
+    else {
+        cout << "You can only repair at the first period or do not repair at all. Input 1 or 0 instead." << endl;
+        return 0;
+    }
 }
