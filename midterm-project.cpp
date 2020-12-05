@@ -4,6 +4,12 @@
 #include <vector>
 using namespace std;
 
+//multipliers
+const int durationMultiplier = 1;
+const int endTimeMultiplier = 1;
+const int deadlineMultiplier = 1;
+const int quantityMultiplier = 1;
+
 //declare structures
 struct Task
 {
@@ -131,10 +137,6 @@ int main()
 
 void sortTasks()
 {
-  //multipliers
-  const int deadlineMultiplier = 1;
-  const int quantityMultiplier = 1;
-
   //sort
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.deadline < rhs.deadline;
@@ -225,9 +227,6 @@ Assignment optimalAssignment(const Task task)
 void sortAssignment()
 {
   {
-    //multipliers
-    const int durationMultiplier = 1;
-    const int endTimeMultiplier = 1;
 
     for (int i = 0; i < machineNum * 2; i++)
     {
