@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 using namespace std;
 
 //declare structures
@@ -7,6 +8,7 @@ struct Task
   int id;
   int quantity;
   int deadline;
+  int score = 0;
 };
 struct Machine
 {
@@ -22,6 +24,9 @@ struct Machine
 int machineNum = -1, taskNum = -1, maxRepairNum = -1;
 Machine *machine;
 Task *task;
+
+//declare functions
+void sortTasks();
 
 //algorithm
 int main()
@@ -47,4 +52,34 @@ int main()
   //end of input
 
   return 0;
+}
+
+void sortTasks()
+{
+  //multipliers
+  const int deadlineMultiplier = 1;
+  const int quantityMultiplier = 1;
+
+  //sort
+  sort(task, task + taskNum, [](const Task &lhs, const Task &rhs) {
+    return lhs.deadline < rhs.deadline;
+  });
+
+  for (int i = taskNum; i > 0; i--)
+  {
+    task[i].score += i * deadlineMultiplier;
+  }
+
+  sort(task, task + taskNum, [](const Task &lhs, const Task &rhs) {
+    return lhs.quantity < rhs.quantity;
+  });
+
+  for (int i = taskNum; i > 0; i--)
+  {
+    task[i].score += i * quantityMultiplier;
+  }
+
+  sort(task, task + taskNum, [](const Task &lhs, const Task &rhs) {
+    return lhs.score > rhs.score;
+  });
 }
