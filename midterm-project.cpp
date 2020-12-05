@@ -138,14 +138,6 @@ int main()
 void sortTasks()
 {
   //sort
-  sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
-    return lhs.deadline < rhs.deadline;
-  });
-
-  for (int i = 0; i < taskNum; i++)
-  {
-    tasks[i].score += (taskNum - i + 1) * deadlineMultiplier;
-  }
 
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.quantity < rhs.quantity;
@@ -154,6 +146,15 @@ void sortTasks()
   for (int i = 0; i < taskNum; i++)
   {
     tasks[i].score += (taskNum - i + 1) * quantityMultiplier;
+  }
+
+  sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
+    return lhs.deadline < rhs.deadline;
+  });
+
+  for (int i = 0; i < taskNum; i++)
+  {
+    tasks[i].score += (taskNum - i + 1) * deadlineMultiplier;
   }
 
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
