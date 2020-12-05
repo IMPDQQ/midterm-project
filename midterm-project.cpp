@@ -64,6 +64,7 @@ int Machine::calcTime(Task aTask, int repairOrNot) {
         }
         quantity -= createYield(repairOrNot, idealProduction, decreasingRate, maintenanceTime, initialProduction, currentPeriod, lowestYieldConstraint);
         consumedPeriod++;
+        currentPeriod++;
     }
 }
 
