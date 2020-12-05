@@ -103,7 +103,7 @@ int main()
   {
     if (schedule[i].size() == 0)
     {
-      cout << "0\n";
+      cout << "0";
     }
     else
     {
@@ -122,10 +122,10 @@ int main()
           cout << schedule[i][j] + 1;
         }
       }
-      if (i != machineNum - 1)
-      {
-        cout << "\n";
-      }
+    }
+    if (i != machineNum - 1)
+    {
+      cout << "\n";
     }
   }
 
