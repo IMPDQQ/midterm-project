@@ -7,27 +7,27 @@ using namespace std;
 //declare structures
 struct Task
 {
-  int id;
-  int quantity;
-  int deadline;
+  int id=0;
+  int quantity=0;
+  int deadline=0;
   int score = 0;
 };
 struct Machine
 {
-  int id;
-  double idealProduction;
-  double initialProduction;
-  double decreasingRate;
-  double minimumProduction;
-  int maintenanceTime;
-  double currentPeriod;                          // starts from 1
+  int id=0;
+  double idealProduction=0;
+  double initialProduction=0;
+  double decreasingRate=0;
+  double minimumProduction=0;
+  int maintenanceTime=0;
+  int currentPeriod=0;                          // starts from 1
   int calcTime(Task testTask, bool repairOrNot); // if no repair: repairOrNot = 0
 };
 struct Assignment
 {
-  int time;
-  bool repair;
-  int assignTo;
+  int time=0;
+  bool repair=0;
+  int assignTo=0;
   int score = 0;
 };
 
@@ -65,6 +65,7 @@ int main()
     tasks[i].id = i;
     cin >> tasks[i].quantity >> tasks[i].deadline;
   }
+  assignments = new Assignment[(machineNum * 2)];
   //end of input
 
   sortTasks();
@@ -74,6 +75,7 @@ int main()
   for (int i = 0; i < taskNum; i++)
   {
     Assignment optimal = optimalAssignment(tasks[i]);
+    cout << i <<"\n";
     if (optimal.repair)
     {
       schedule[optimal.assignTo].push_back(-1);
@@ -114,6 +116,7 @@ int main()
 
   delete[] machine;
   delete[] tasks;
+  delete[] assignments;
   return 0;
 }
 
@@ -187,10 +190,8 @@ double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, i
   }
 }
 
-Assignment optimalAssignment(Task task)
+Assignment optimalAssignment(const Task task)
 {
-  assignments = new Assignment[machineNum * 2];
-  cout << "flag";
   for (int i = 0; i < machineNum; i++)
   {
     assignments[i * 2].time = machine[i].calcTime(task, 0);
@@ -205,7 +206,6 @@ Assignment optimalAssignment(Task task)
   optimal.time = assignments[0].time;
   optimal.assignTo = assignments[0].assignTo;
   optimal.repair = assignments[0].repair;
-  delete[] assignments;
   return optimal;
 }
 
