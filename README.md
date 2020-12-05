@@ -1,5 +1,3 @@
 # midterm-project
 
 
-by jhengyilin
-
