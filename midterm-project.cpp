@@ -33,9 +33,9 @@ struct Assignment
 
 //declare global variables
 int machineNum = -1, taskNum = -1, maxRepairNum = -1;
-Machine *machine=nullptr;
-Task *task=nullptr;
-Assignment *assignments=nullptr;
+Machine *machine = nullptr;
+Task *tasks = nullptr;
+Assignment *assignments = nullptr;
 
 //declare functions
 void sortTasks();
@@ -58,23 +58,22 @@ int main()
     cin >> machine[i].idealProduction >> machine[i].decreasingRate >> machine[i].maintenanceTime >> machine[i].initialProduction >> machine[i].minimumProduction;
   }
 
-  task = new Task[taskNum];
+  tasks = new Task[taskNum];
 
   for (int i = 0; i < taskNum; i++)
   {
-    task[i].id = i;
-    cin >> task[i].quantity >> task[i].deadline;
+    tasks[i].id = i;
+    cin >> tasks[i].quantity >> tasks[i].deadline;
   }
   //end of input
 
   sortTasks();
 
   vector<int> schedule[machineNum];
-  
-  //bug start
+
   for (int i = 0; i < taskNum; i++)
   {
-    Assignment optimal = optimalAssignment(task[i]);
+    Assignment optimal = optimalAssignment(tasks[i]);
     if (optimal.repair)
     {
       schedule[optimal.assignTo].push_back(-1);
@@ -82,7 +81,6 @@ int main()
     schedule[optimal.assignTo].push_back(i);
     machine[optimal.assignTo].currentPeriod += optimal.time;
   }
-  //bug end
 
   for (int i = 0; i < machineNum; i++)
   {
@@ -114,8 +112,8 @@ int main()
     }
   }
 
-  delete machine;
-  delete task;
+  delete[] machine;
+  delete[] tasks;
   return 0;
 }
 
@@ -126,25 +124,25 @@ void sortTasks()
   const int quantityMultiplier = 1;
 
   //sort
-  sort(task, task + taskNum, [](const Task &lhs, const Task &rhs) {
+  sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.deadline < rhs.deadline;
   });
 
   for (int i = taskNum; i > 0; i--)
   {
-    task[i].score += i * deadlineMultiplier;
+    tasks[i].score += i * deadlineMultiplier;
   }
 
-  sort(task, task + taskNum, [](const Task &lhs, const Task &rhs) {
+  sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.quantity < rhs.quantity;
   });
 
   for (int i = taskNum; i > 0; i--)
   {
-    task[i].score += i * quantityMultiplier;
+    tasks[i].score += i * quantityMultiplier;
   }
 
-  sort(task, task + taskNum, [](const Task &lhs, const Task &rhs) {
+  sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.score < rhs.score;
   });
 }
@@ -191,7 +189,8 @@ double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, i
 
 Assignment optimalAssignment(Task task)
 {
-  assignments = new Assignment[taskNum * 2];
+  assignments = new Assignment[machineNum * 2];
+  cout << "flag";
   for (int i = 0; i < machineNum; i++)
   {
     assignments[i * 2].time = machine[i].calcTime(task, 0);
@@ -206,7 +205,7 @@ Assignment optimalAssignment(Task task)
   optimal.time = assignments[0].time;
   optimal.assignTo = assignments[0].assignTo;
   optimal.repair = assignments[0].repair;
-  delete assignments;
+  delete[] assignments;
   return optimal;
 }
 
@@ -218,25 +217,25 @@ void sortAssignment()
     const int endTimeMultiplier = 1;
 
     //sort
-    sort(assignments, assignments + taskNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
+    sort(assignments, assignments + machineNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
       return lhs.time < rhs.time;
     });
 
-    for (int i = taskNum * 2; i > 0; i--)
+    for (int i = machineNum * 2; i > 0; i--)
     {
       assignments[i].score += i * durationMultiplier;
     }
 
-    sort(assignments, assignments + taskNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
+    sort(assignments, assignments + machineNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
       return lhs.time + machine[lhs.assignTo].currentPeriod < rhs.time + machine[rhs.assignTo].currentPeriod;
     });
 
-    for (int i = taskNum * 2; i > 0; i--)
+    for (int i = machineNum * 2; i > 0; i--)
     {
       assignments[i].score += i * endTimeMultiplier;
     }
 
-    sort(assignments, assignments + taskNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
+    sort(assignments, assignments + machineNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
       return lhs.score < rhs.score;
     });
   }
