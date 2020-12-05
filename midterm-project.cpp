@@ -15,7 +15,6 @@ struct Machine {
   double minimumProduction;
   int maintenanceTime;
 };
-double calcTime(Task aTask, Machine aMachine, )
 
 
 int main() {
