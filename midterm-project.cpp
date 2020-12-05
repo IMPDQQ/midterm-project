@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 using namespace std;
 
 //declare structures
@@ -18,7 +19,11 @@ struct Machine
   double decreasingRate;
   double minimumProduction;
   int maintenanceTime;
+  double currentPeriod;                          // starts from 1
+  int calcTime(Task testTask, bool repairOrNot); // if no repair: repairOrNot = 0
 };
+
+double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, int repairPeriods, double initYield, int currentPeriod, double lowestYieldConstraint);
 
 //declare global variables
 int machineNum = -1, taskNum = -1, maxRepairNum = -1;
@@ -82,4 +87,46 @@ void sortTasks()
   sort(task, task + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.score > rhs.score;
   });
+}
+
+int Machine::calcTime(const Task testTask, const bool repairOrNot)
+{
+  int quantity = testTask.quantity, tmpCurrentPeriod = currentPeriod, consumedPeriod = 0;
+  double lowestYieldConstraint = idealProduction * minimumProduction / static_cast<double>(100);
+  while (true)
+  {
+    if (quantity <= 0)
+    {
+      return consumedPeriod;
+    }
+    quantity -= createYield(repairOrNot, idealProduction, decreasingRate, maintenanceTime, initialProduction, tmpCurrentPeriod, lowestYieldConstraint);
+    consumedPeriod++;
+    tmpCurrentPeriod++;
+  }
+}
+
+double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, int repairPeriods, double initYield, int currentPeriod, double lowestYieldConstraint)
+{
+  if (whichPeriodToRepair == 0)
+  { // do not repair
+    return max(stdOutput * round(initYield - yieldDec * (currentPeriod)) / static_cast<double>(100),
+               lowestYieldConstraint);
+  }
+  else if (whichPeriodToRepair == 1)
+  {
+    if (whichPeriodToRepair <= currentPeriod && currentPeriod <= whichPeriodToRepair + repairPeriods - 1)
+    {
+      return 0;
+    }
+    else
+    {
+      return max(stdOutput * round(100.0 - yieldDec * (currentPeriod - whichPeriodToRepair - repairPeriods)) / static_cast<double>(100),
+                 lowestYieldConstraint);
+    }
+  }
+  else
+  {
+    cout << "You can only repair at the first period or do not repair at all. Input 1 or 0 instead." << endl;
+    return 0;
+  }
 }
