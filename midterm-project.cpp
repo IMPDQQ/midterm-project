@@ -7,27 +7,27 @@ using namespace std;
 //declare structures
 struct Task
 {
-  int id=0;
-  int quantity=0;
-  int deadline=0;
+  int id = 0;
+  int quantity = 0;
+  int deadline = 0;
   int score = 0;
 };
 struct Machine
 {
-  int id=0;
-  double idealProduction=0;
-  double initialProduction=0;
-  double decreasingRate=0;
-  double minimumProduction=0;
-  int maintenanceTime=0;
-  int currentPeriod=0;                          // starts from 1
+  int id = 0;
+  double idealProduction = 0;
+  double initialProduction = 0;
+  double decreasingRate = 0;
+  double minimumProduction = 0;
+  int maintenanceTime = 0;
+  int currentPeriod = 0;                         // starts from 1
   int calcTime(Task testTask, bool repairOrNot); // if no repair: repairOrNot = 0
 };
 struct Assignment
 {
-  int time=0;
-  bool repair=0;
-  int assignTo=0;
+  int time = 0;
+  bool repair = 0;
+  int assignTo = 0;
   int score = 0;
 };
 
@@ -71,11 +71,9 @@ int main()
   sortTasks();
 
   vector<int> schedule[machineNum];
-
   for (int i = 0; i < taskNum; i++)
   {
     Assignment optimal = optimalAssignment(tasks[i]);
-    cout << i <<"\n";
     if (optimal.repair)
     {
       schedule[optimal.assignTo].push_back(-1);
@@ -131,22 +129,22 @@ void sortTasks()
     return lhs.deadline < rhs.deadline;
   });
 
-  for (int i = taskNum; i > 0; i--)
+  for (int i = 0; i < taskNum; i++)
   {
-    tasks[i].score += i * deadlineMultiplier;
+    tasks[i].score += (taskNum - i + 1) * deadlineMultiplier;
   }
 
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.quantity < rhs.quantity;
   });
 
-  for (int i = taskNum; i > 0; i--)
+  for (int i = 0; i < taskNum; i++)
   {
-    tasks[i].score += i * quantityMultiplier;
+    tasks[i].score += (taskNum - i + 1) * quantityMultiplier;
   }
 
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
-    return lhs.score < rhs.score;
+    return lhs.score > rhs.score;
   });
 }
 
@@ -216,27 +214,32 @@ void sortAssignment()
     const int durationMultiplier = 1;
     const int endTimeMultiplier = 1;
 
+    for (int i = 0; i < machineNum * 2; i++)
+    {
+      assignments[i].score = 0;
+    }
+
     //sort
     sort(assignments, assignments + machineNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
       return lhs.time < rhs.time;
     });
 
-    for (int i = machineNum * 2; i > 0; i--)
+    for (int i = 0; i < machineNum * 2; i++)
     {
-      assignments[i].score += i * durationMultiplier;
+      assignments[i].score += (machineNum * 2 - i + 1) * durationMultiplier;
     }
 
     sort(assignments, assignments + machineNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
       return lhs.time + machine[lhs.assignTo].currentPeriod < rhs.time + machine[rhs.assignTo].currentPeriod;
     });
 
-    for (int i = machineNum * 2; i > 0; i--)
+    for (int i = 0; i < machineNum * 2; i++)
     {
-      assignments[i].score += i * endTimeMultiplier;
+      assignments[i].score += (machineNum * 2 - i + 1) * endTimeMultiplier;
     }
 
     sort(assignments, assignments + machineNum * 2, [](const Assignment &lhs, const Assignment &rhs) {
-      return lhs.score < rhs.score;
+      return lhs.score > rhs.score;
     });
   }
 }
