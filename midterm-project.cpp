@@ -36,6 +36,8 @@ int machineNum = -1, taskNum = -1, maxRepairNum = -1;
 Machine *machine = nullptr;
 Task *tasks = nullptr;
 Assignment *assignments = nullptr;
+int maxDeadline = 0;
+bool **repairing = nullptr;
 
 //declare functions
 void sortTasks();
@@ -70,6 +72,12 @@ int main()
 
   sortTasks();
 
+  repairing = new bool *[machineNum];
+  for (int i = 0; i < machineNum; i++)
+  {
+    repairing[i] = new bool[maxDeadline]();
+  }
+
   vector<int> schedule[machineNum];
   for (int i = 0; i < taskNum; i++)
   {
@@ -79,6 +87,10 @@ int main()
       schedule[optimal.assignTo].push_back(-1);
     }
     schedule[optimal.assignTo].push_back(i);
+    for (int j = machine[optimal.assignTo].currentPeriod; j < machine[optimal.assignTo].currentPeriod + machine[optimal.assignTo].maintenanceTime; j++)
+    {
+      repairing[optimal.assignTo][j] = 1;
+    }
     machine[optimal.assignTo].currentPeriod += optimal.time;
   }
 
@@ -102,7 +114,7 @@ int main()
         }
         else
         {
-          cout << schedule[i][j];
+          cout << schedule[i][j] + 1;
         }
       }
       if (i != machineNum - 1)
@@ -112,6 +124,11 @@ int main()
     }
   }
 
+  for (int i = 0; i < machineNum; i++)
+  {
+    delete[] repairing[i];
+  }
+  delete[] repairing;
   delete[] machine;
   delete[] tasks;
   delete[] assignments;
@@ -128,6 +145,7 @@ void sortTasks()
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.deadline < rhs.deadline;
   });
+  maxDeadline = tasks[taskNum - 1].deadline * 5;
 
   for (int i = 0; i < taskNum; i++)
   {
@@ -195,9 +213,31 @@ Assignment optimalAssignment(const Task task)
     assignments[i * 2].time = machine[i].calcTime(task, 0);
     assignments[i * 2].assignTo = i;
     assignments[i * 2].repair = 0;
-    assignments[i * 2 + 1].time = machine[i].calcTime(task, 1);
-    assignments[i * 2 + 1].assignTo = i;
-    assignments[i * 2 + 1].repair = 1;
+
+    bool repairSchedulable = 1;
+    for (int j = machine[i].currentPeriod; j < machine[i].currentPeriod + machine[i].maintenanceTime; j++)
+    {
+      int repairCnt = 0;
+      for (int k = 0; k < machineNum; k++)
+      {
+        if (repairing[k][j])
+        {
+          repairCnt++;
+        }
+      }
+      if (repairCnt >= maxRepairNum)
+      {
+        repairSchedulable = 0;
+        break;
+      }
+    }
+
+    if (repairSchedulable)
+    {
+      assignments[i * 2 + 1].time = machine[i].calcTime(task, 1);
+      assignments[i * 2 + 1].assignTo = i;
+      assignments[i * 2 + 1].repair = 1;
+    }
   }
   sortAssignment();
   Assignment optimal;
