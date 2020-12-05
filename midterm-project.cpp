@@ -30,6 +30,11 @@ struct Assignment
   int assignTo = 0;
   int score = 0;
 };
+struct RepairTimeSet
+{
+  int begin;
+  int end;
+};
 
 //declare global variables
 int machineNum = -1, taskNum = -1, maxRepairNum = -1;
@@ -37,7 +42,7 @@ Machine *machine = nullptr;
 Task *tasks = nullptr;
 Assignment *assignments = nullptr;
 int maxDeadline = 0;
-bool **repairing = nullptr;
+vector<RepairTimeSet> repairLog;
 
 //declare functions
 void sortTasks();
@@ -45,6 +50,8 @@ double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, i
 Assignment optimalAssignment(Task);
 int calculateScore(int, int);
 void sortAssignment();
+void writeRepair(int, int);
+bool checkRepair(int, int);
 
 //algorithm
 int main()
@@ -68,15 +75,10 @@ int main()
     cin >> tasks[i].quantity >> tasks[i].deadline;
   }
   assignments = new Assignment[(machineNum * 2)];
+  repairLog.clear();
   //end of input
 
   sortTasks();
-
-  repairing = new bool *[machineNum];
-  for (int i = 0; i < machineNum; i++)
-  {
-    repairing[i] = new bool[maxDeadline]();
-  }
 
   vector<int> schedule[machineNum];
   for (int i = 0; i < taskNum; i++)
@@ -87,10 +89,7 @@ int main()
       schedule[optimal.assignTo].push_back(-1);
     }
     schedule[optimal.assignTo].push_back(i);
-    for (int j = machine[optimal.assignTo].currentPeriod; j < machine[optimal.assignTo].currentPeriod + machine[optimal.assignTo].maintenanceTime; j++)
-    {
-      repairing[optimal.assignTo][j] = 1;
-    }
+    writeRepair(machine[optimal.assignTo].currentPeriod, machine[optimal.assignTo].maintenanceTime);
     machine[optimal.assignTo].currentPeriod += optimal.time;
   }
 
@@ -124,11 +123,6 @@ int main()
     }
   }
 
-  for (int i = 0; i < machineNum; i++)
-  {
-    delete[] repairing[i];
-  }
-  delete[] repairing;
   delete[] machine;
   delete[] tasks;
   delete[] assignments;
@@ -145,7 +139,6 @@ void sortTasks()
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
     return lhs.deadline < rhs.deadline;
   });
-  maxDeadline = tasks[taskNum - 1].deadline * 5;
 
   for (int i = 0; i < taskNum; i++)
   {
@@ -214,25 +207,7 @@ Assignment optimalAssignment(const Task task)
     assignments[i * 2].assignTo = i;
     assignments[i * 2].repair = 0;
 
-    bool repairSchedulable = 1;
-    for (int j = machine[i].currentPeriod; j < machine[i].currentPeriod + machine[i].maintenanceTime; j++)
-    {
-      int repairCnt = 0;
-      for (int k = 0; k < machineNum; k++)
-      {
-        if (repairing[k][j])
-        {
-          repairCnt++;
-        }
-      }
-      if (repairCnt >= maxRepairNum)
-      {
-        repairSchedulable = 0;
-        break;
-      }
-    }
-
-    if (repairSchedulable)
+    if (checkRepair(machine[i].currentPeriod, machine[i].maintenanceTime))
     {
       assignments[i * 2 + 1].time = machine[i].calcTime(task, 1);
       assignments[i * 2 + 1].assignTo = i;
@@ -282,4 +257,42 @@ void sortAssignment()
       return lhs.score > rhs.score;
     });
   }
+}
+
+void writeRepair(int start, int duration)
+{
+  RepairTimeSet tmp;
+  tmp.begin = start;
+  tmp.end = start + duration - 1;
+  repairLog.push_back(tmp);
+}
+
+bool checkRepair(int start, int duration)
+{
+  bool repairable = 1;
+  for (int i = start; i < start + duration; i++)
+  {
+    int repairCnt = 0;
+    for (int j = 0; j < repairLog.size(); j++)
+    {
+      if (i >= repairLog[j].begin && i <= repairLog[j].end)
+      {
+        repairCnt++;
+      }
+      if (repairCnt >= maxRepairNum)
+      {
+        repairable = 0;
+        break;
+      }
+    }
+    if (repairCnt >= maxRepairNum)
+    {
+      repairable = 0;
+    }
+    if (!repairable)
+    {
+      break;
+    }
+  }
+  return repairable;
 }
