@@ -29,6 +29,8 @@ struct Machine
   int currentPeriod = 0;                         // starts from 1
   double currentOutputLvl = 0;
   int calcTime(Task testTask, bool repairOrNot); // if no repair: repairOrNot = 0
+  void doTask(const Task testTask, const bool repairOrNot);
+
 };
 struct Assignment
 {
@@ -94,10 +96,11 @@ int main()
     {
       schedule[optimal.assignTo].push_back(-1);
       writeRepair(machine[optimal.assignTo].currentPeriod, machine[optimal.assignTo].maintenanceTime);
-      machine[optimal.assignTo].currentOutputLvl = 100;
     }
     schedule[optimal.assignTo].push_back(i);
     machine[optimal.assignTo].currentPeriod += optimal.time;
+    machine[optimal.assignTo].doTask(tasks[i], optimal.repair);
+
   }
 
   for (int i = 0; i < machineNum; i++)
@@ -187,6 +190,24 @@ int Machine::calcTime(const Task testTask, const bool repairOrNot)
     tmpCurrentOutputLvl -= decreasingRate;
     consumedPeriod++;
   }
+}
+
+void Machine::doTask(Task testTask, const bool repairOrNot)
+{
+    // use testTask.quantity and currentOutputLvl
+    if (repairOrNot) {
+        currentOutputLvl = 100;
+    }
+    double lowestYieldConstraint = idealProduction * minimumProduction / static_cast<double>(100);
+    while (true)
+    {
+        if (testTask.quantity <= 0)
+        {
+            break;
+        }
+        testTask.quantity -= createYield(idealProduction, decreasingRate, maintenanceTime, initialProduction, currentOutputLvl, lowestYieldConstraint);
+        currentOutputLvl -= decreasingRate;
+    }
 }
 
 double createYield(double stdOutput, double yieldDec, int repairPeriods, double initYield, double tempCurrentOutputLvl, double lowestYieldConstraint)
