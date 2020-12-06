@@ -27,7 +27,10 @@ struct Machine
   double minimumProduction = 0;
   int maintenanceTime = 0;
   int currentPeriod = 0;                         // starts from 1
+  double currentOutputLvl = 0;
   int calcTime(Task testTask, bool repairOrNot); // if no repair: repairOrNot = 0
+  void doTask(const Task testTask, const bool repairOrNot);
+
 };
 struct Assignment
 {
@@ -52,9 +55,8 @@ vector<RepairTimeSet> repairLog;
 
 //declare functions
 void sortTasks();
-double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, int repairPeriods, double initYield, int currentPeriod, double lowestYieldConstraint);
+double createYield(double stdOutput, double yieldDec, int repairPeriods, double initYield, double tempCurrentOutputLvl, double lowestYieldConstraint);
 Assignment optimalAssignment(Task);
-int calculateScore(int, int);
 void sortAssignment();
 void writeRepair(int, int);
 bool checkRepair(int, int);
@@ -93,17 +95,22 @@ int main()
     if (optimal.repair)
     {
       schedule[optimal.assignTo].push_back(-1);
+      writeRepair(machine[optimal.assignTo].currentPeriod, machine[optimal.assignTo].maintenanceTime);
     }
     schedule[optimal.assignTo].push_back(i);
-    writeRepair(machine[optimal.assignTo].currentPeriod, machine[optimal.assignTo].maintenanceTime);
     machine[optimal.assignTo].currentPeriod += optimal.time;
+    machine[optimal.assignTo].doTask(tasks[i], optimal.repair);
+
   }
 
   for (int i = 0; i < machineNum; i++)
   {
-    if (schedule[i].size() == 0)
+    if (schedule[i].size() == 0 && i != machineNum - 1)
     {
       cout << "0";
+    }
+    else if (schedule[i].size() == 0 && i == machineNum - 1) {
+        cout << "0";
     }
     else
     {
@@ -164,7 +171,14 @@ void sortTasks()
 
 int Machine::calcTime(const Task testTask, const bool repairOrNot)
 {
-  int quantity = testTask.quantity, tmpCurrentPeriod = currentPeriod, consumedPeriod = 0;
+  int quantity = testTask.quantity, tmpCurrentOutputLvl = currentOutputLvl, consumedPeriod;
+  if (!repairOrNot) {
+      consumedPeriod = 0;
+  }
+  else {
+      consumedPeriod = maintenanceTime;
+      tmpCurrentOutputLvl = 100;
+  }
   double lowestYieldConstraint = idealProduction * minimumProduction / static_cast<double>(100);
   while (true)
   {
@@ -172,34 +186,33 @@ int Machine::calcTime(const Task testTask, const bool repairOrNot)
     {
       return consumedPeriod;
     }
-    quantity -= createYield(repairOrNot, idealProduction, decreasingRate, maintenanceTime, initialProduction, tmpCurrentPeriod, lowestYieldConstraint);
+    quantity -= createYield(idealProduction, decreasingRate, maintenanceTime, initialProduction, tmpCurrentOutputLvl, lowestYieldConstraint);
+    tmpCurrentOutputLvl -= decreasingRate;
     consumedPeriod++;
-    tmpCurrentPeriod++;
   }
 }
 
-double createYield(int whichPeriodToRepair, double stdOutput, double yieldDec, int repairPeriods, double initYield, int currentPeriod, double lowestYieldConstraint)
+void Machine::doTask(Task testTask, const bool repairOrNot)
 {
-  if (whichPeriodToRepair == 0)
-  { // do not repair
-    return max(stdOutput * round(initYield - yieldDec * (currentPeriod)) / static_cast<double>(100), lowestYieldConstraint);
-  }
-  else if (whichPeriodToRepair == 1)
-  {
-    if (whichPeriodToRepair <= currentPeriod && currentPeriod <= whichPeriodToRepair + repairPeriods - 1)
-    {
-      return 0;
+    // use testTask.quantity and currentOutputLvl
+    if (repairOrNot) {
+        currentOutputLvl = 100;
     }
-    else
+    double lowestYieldConstraint = idealProduction * minimumProduction / static_cast<double>(100);
+    while (true)
     {
-      return max(stdOutput * round(100.0 - yieldDec * (currentPeriod - whichPeriodToRepair - repairPeriods)) / static_cast<double>(100), lowestYieldConstraint);
+        if (testTask.quantity <= 0)
+        {
+            break;
+        }
+        testTask.quantity -= createYield(idealProduction, decreasingRate, maintenanceTime, initialProduction, currentOutputLvl, lowestYieldConstraint);
+        currentOutputLvl -= decreasingRate;
     }
-  }
-  else
-  {
-    cout << "You can only repair at the first period or do not repair at all. Input 1 or 0 instead." << endl;
-    return 0;
-  }
+}
+
+double createYield(double stdOutput, double yieldDec, int repairPeriods, double initYield, double tempCurrentOutputLvl, double lowestYieldConstraint)
+{
+    return max(stdOutput * round(tempCurrentOutputLvl - yieldDec) / static_cast<double>(100), lowestYieldConstraint);
 }
 
 Assignment optimalAssignment(const Task task)
