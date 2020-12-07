@@ -7,8 +7,8 @@ using namespace std;
 //multipliers
 const float durationMultiplier = 0.6;
 const float endTimeMultiplier = 0.4;
-const float deadlineMultiplier = 0.6;
-const float quantityMultiplier = 0.4;
+const float deadlineMultiplier = 0.639;
+const float quantityMultiplier = 0.361;
 
 //declare structures
 struct Task
