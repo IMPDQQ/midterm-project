@@ -5,10 +5,10 @@
 using namespace std;
 
 //multipliers
-const float durationMultiplier = 2;
-const float endTimeMultiplier = 3;
-const float deadlineMultiplier = 2;
-const float quantityMultiplier = 3;
+const float durationMultiplier = 0.4;
+const float endTimeMultiplier = 0.6;
+const float deadlineMultiplier = 0.4;
+const float quantityMultiplier = 0.6;
 
 //declare structures
 struct Task
