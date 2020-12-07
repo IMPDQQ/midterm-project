@@ -6,8 +6,8 @@ using namespace std;
 
 //multipliers
 const float durationMultiplier = 2;
-const float endTimeMultiplier = 3;
-const float deadlineMultiplier = 2;
+const float endTimeMultiplier = 5;
+const float deadlineMultiplier = 7;
 const float quantityMultiplier = 3;
 
 //declare structures
