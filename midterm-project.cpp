@@ -6,8 +6,8 @@ using namespace std;
 
 //multipliers
 const float durationMultiplier = 2;
-const float endTimeMultiplier = 5;
-const float deadlineMultiplier = 7;
+const float endTimeMultiplier = 3;
+const float deadlineMultiplier = 2;
 const float quantityMultiplier = 3;
 
 //declare structures
@@ -26,11 +26,10 @@ struct Machine
   double decreasingRate = 0;
   double minimumProduction = 0;
   int maintenanceTime = 0;
-  int currentPeriod = 0;                         // starts from 1
+  int currentPeriod = 0; // starts from 1
   double currentOutputLvl = 0;
   int calcTime(Task testTask, bool repairOrNot); // if no repair: repairOrNot = 0
   void doTask(const Task testTask, const bool repairOrNot);
-
 };
 struct Assignment
 {
@@ -100,17 +99,13 @@ int main()
     schedule[optimal.assignTo].push_back(i);
     machine[optimal.assignTo].currentPeriod += optimal.time;
     machine[optimal.assignTo].doTask(tasks[i], optimal.repair);
-
   }
 
   for (int i = 0; i < machineNum; i++)
   {
-    if (schedule[i].size() == 0 && i != machineNum - 1)
+    if (schedule[i].size() == 0)
     {
       cout << "0";
-    }
-    else if (schedule[i].size() == 0 && i == machineNum - 1) {
-        cout << "0";
     }
     else
     {
@@ -172,12 +167,14 @@ void sortTasks()
 int Machine::calcTime(const Task testTask, const bool repairOrNot)
 {
   int quantity = testTask.quantity, tmpCurrentOutputLvl = currentOutputLvl, consumedPeriod;
-  if (!repairOrNot) {
-      consumedPeriod = 0;
+  if (!repairOrNot)
+  {
+    consumedPeriod = 0;
   }
-  else {
-      consumedPeriod = maintenanceTime;
-      tmpCurrentOutputLvl = 100;
+  else
+  {
+    consumedPeriod = maintenanceTime;
+    tmpCurrentOutputLvl = 100;
   }
   double lowestYieldConstraint = idealProduction * minimumProduction / static_cast<double>(100);
   while (true)
@@ -194,25 +191,26 @@ int Machine::calcTime(const Task testTask, const bool repairOrNot)
 
 void Machine::doTask(Task testTask, const bool repairOrNot)
 {
-    // use testTask.quantity and currentOutputLvl
-    if (repairOrNot) {
-        currentOutputLvl = 100;
-    }
-    double lowestYieldConstraint = idealProduction * minimumProduction / static_cast<double>(100);
-    while (true)
+  // use testTask.quantity and currentOutputLvl
+  if (repairOrNot)
+  {
+    currentOutputLvl = 100;
+  }
+  double lowestYieldConstraint = idealProduction * minimumProduction / static_cast<double>(100);
+  while (true)
+  {
+    if (testTask.quantity <= 0)
     {
-        if (testTask.quantity <= 0)
-        {
-            break;
-        }
-        testTask.quantity -= createYield(idealProduction, decreasingRate, maintenanceTime, initialProduction, currentOutputLvl, lowestYieldConstraint);
-        currentOutputLvl -= decreasingRate;
+      break;
     }
+    testTask.quantity -= createYield(idealProduction, decreasingRate, maintenanceTime, initialProduction, currentOutputLvl, lowestYieldConstraint);
+    currentOutputLvl -= decreasingRate;
+  }
 }
 
 double createYield(double stdOutput, double yieldDec, int repairPeriods, double initYield, double tempCurrentOutputLvl, double lowestYieldConstraint)
 {
-    return max(stdOutput * round(tempCurrentOutputLvl - yieldDec) / static_cast<double>(100), lowestYieldConstraint);
+  return max(stdOutput * round(tempCurrentOutputLvl - yieldDec) / static_cast<double>(100), lowestYieldConstraint);
 }
 
 Assignment optimalAssignment(const Task task)
@@ -222,12 +220,15 @@ Assignment optimalAssignment(const Task task)
     assignments[i * 2].time = machine[i].calcTime(task, 0);
     assignments[i * 2].assignTo = i;
     assignments[i * 2].repair = 0;
-
     if (checkRepair(machine[i].currentPeriod, machine[i].maintenanceTime))
     {
       assignments[i * 2 + 1].time = machine[i].calcTime(task, 1);
       assignments[i * 2 + 1].assignTo = i;
       assignments[i * 2 + 1].repair = 1;
+    }
+    else
+    {
+      assignments[i * 2 + 1].time = 2147483647;
     }
   }
   sortAssignment();
@@ -283,7 +284,7 @@ void writeRepair(int start, int duration)
 bool checkRepair(int start, int duration)
 {
   bool repairable = 1;
-  for (int i = start; i < start + duration - 1; i++)
+  for (int i = start; i < start + duration; i++)
   {
     int repairCnt = 0;
     for (int j = 0; j < repairLog.size(); j++)
