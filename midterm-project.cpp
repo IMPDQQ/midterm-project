@@ -7,8 +7,8 @@ using namespace std;
 //multipliers
 const float durationMultiplier = 0.6;
 const float endTimeMultiplier = 0.4;
-const float deadlineMultiplier = 0.639;
-const float quantityMultiplier = 0.361;
+const float deadlineMultiplier = 0.6;
+const float quantityMultiplier = 0.4;
 
 //declare structures
 struct Task
@@ -147,7 +147,8 @@ void sortTasks()
 
   for (int i = 0; i < taskNum; i++)
   {
-    tasks[i].score += (taskNum - i + 1) * quantityMultiplier;
+    //tasks[i].score += (taskNum - i + 1) * quantityMultiplier;
+    tasks[i].score += quantityMultiplier * (tasks[taskNum - 1].quantity - tasks[i].quantity) / tasks[taskNum - 1].quantity;
   }
 
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
@@ -156,7 +157,8 @@ void sortTasks()
 
   for (int i = 0; i < taskNum; i++)
   {
-    tasks[i].score += (taskNum - i + 1) * deadlineMultiplier;
+    //tasks[i].score += (taskNum - i + 1) * deadlineMultiplier;
+    tasks[i].score += deadlineMultiplier * (tasks[taskNum - 1].deadline - tasks[i].deadline) / tasks[taskNum - 1].deadline;
   }
 
   sort(tasks, tasks + taskNum, [](const Task &lhs, const Task &rhs) {
